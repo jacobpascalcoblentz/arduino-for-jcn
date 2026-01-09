@@ -4,6 +4,8 @@
 
 This guide will walk you through setting up your automated hydroponics controller step-by-step. No programming knowledge required!
 
+> Written by someone who codes so you don't have to. You're welcome. Please don't call me at 2 AM asking why the "blinky light stopped blinking."
+
 ---
 
 ## Table of Contents
@@ -225,9 +227,11 @@ You'll install a program called PlatformIO that handles everything for you. Just
 3. Wait for it to compile and upload (first time takes a few minutes)
 4. You should see **SUCCESS** in the terminal
 
-**That's it!** The firmware is now on your Arduino.
+**That's it!** The firmware is now on your Arduino. You are now technically a "programmer." Update your LinkedIn accordingly.
 
 ### If Something Goes Wrong
+
+Don't panic. The Arduino isn't going to explode. Probably.
 
 **"No device found" error:**
 - Make sure Arduino is plugged in
@@ -369,6 +373,8 @@ pumps:
 
 ## Calibrating Sensors
 
+Yes, you actually have to do this part. No, you can't skip it. I know you want to.
+
 ### pH Sensor Calibration
 
 You'll need pH calibration solutions (usually pH 4.0 and pH 7.0).
@@ -447,6 +453,8 @@ The system saves data to `hydro.csv` on the SD card. You can:
 ---
 
 ## Troubleshooting
+
+*"Have you tried turning it off and on again?"* - Tech Support, since 1952
 
 ### "SD card failed - using defaults"
 
@@ -551,5 +559,13 @@ If you're stuck:
 2. Make sure the SD card has `config.yaml`
 3. Connect via USB and look at Serial Monitor for error messages
 4. Check the `SCHEMATICS.txt` file for wiring diagrams
+5. Re-read this guide (yes, the whole thing)
+6. Google the error message
+7. Sleep on it - seriously, bugs fix themselves overnight sometimes
+8. *Then* text your programmer friend, but only after trying steps 1-7
 
 Good luck with your grow!
+
+---
+
+*If your plants die, it wasn't the code. It was you. But mostly it was the code. But legally, it was you.*
