@@ -569,3 +569,149 @@ Good luck with your grow!
 ---
 
 *If your plants die, it wasn't the code. It was you. But mostly it was the code. But legally, it was you.*
+
+---
+
+## Hardware Integration Testing Checklist
+
+Before trusting this thing with your precious plants, run through this checklist. Think of it as a pre-flight check, except instead of a plane, it's a box of wires that squirts liquid.
+
+### Pre-Power Checklist
+
+- [ ] **Visual inspection** - No loose wires, exposed metal touching, or "that doesn't look right" moments
+- [ ] **Power supply off** - Don't test with power connected yet
+- [ ] **USB connected** - Arduino hooked up to computer for monitoring
+- [ ] **Serial Monitor open** - 115200 baud, ready to see messages
+
+### Power-On Tests
+
+- [ ] **Arduino powers on** - Power LED lights up, no smoke (smoke is bad)
+- [ ] **No magic smoke** - Seriously, if anything smells burnt, unplug immediately
+- [ ] **Serial output appears** - You should see boot messages
+
+### Sensor Verification
+
+Run each test and record your readings:
+
+#### Temperature Sensor (DS18B20)
+- [ ] Sensor detected on boot (check Serial Monitor)
+- [ ] Room temp reading: ____°C (should be 18-28°C typically)
+- [ ] Hold sensor in hand - temperature rises? [ ] Yes [ ] No
+- [ ] Dip in ice water - temperature drops? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+#### pH Sensor
+- [ ] Voltage reading appears in Serial Monitor
+- [ ] pH 7.0 buffer reading: ______ (should be 6.5-7.5 before calibration)
+- [ ] pH 4.0 buffer reading: ______ (should be lower than 7.0 reading)
+- [ ] Readings stable (not jumping around wildly)? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+#### TDS Sensor
+- [ ] Voltage reading appears in Serial Monitor
+- [ ] Tap water reading: ______ ppm (typically 100-500 ppm)
+- [ ] Calibration solution reading: ______ ppm
+- [ ] Readings stable? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+#### Ultrasonic Level Sensor
+- [ ] Distance reading appears in Serial Monitor
+- [ ] Empty tank distance: ______ cm
+- [ ] Hand in front of sensor shows shorter distance? [ ] Yes [ ] No
+- [ ] Readings stable (±2cm)? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+### Actuator Tests
+
+**WARNING: Have paper towels ready. Things are about to get wet.**
+
+Enter calibration mode by pressing 'c' in Serial Monitor.
+
+#### pH Down Pump (Pin D5)
+- [ ] Press '6' to test pump
+- [ ] Pump runs for 2 seconds? [ ] Yes [ ] No
+- [ ] Liquid flows through tubing? [ ] Yes [ ] No
+- [ ] Pump stops automatically? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+#### pH Up Pump (Pin D6)
+- [ ] Press '7' to test pump
+- [ ] Pump runs and liquid flows? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+#### Nutrient A Pump (Pin D7)
+- [ ] Press '8' to test pump
+- [ ] Pump runs and liquid flows? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+#### Nutrient B Pump (Pin D8)
+- [ ] Press '9' to test pump
+- [ ] Pump runs and liquid flows? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+#### Fresh Water Valve (Pin D9)
+- [ ] Press '0' to test valve
+- [ ] Valve opens (you should hear a click)? [ ] Yes [ ] No
+- [ ] Water flows when open? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+### SD Card Tests
+
+- [ ] SD card inserted properly (click sound)
+- [ ] "SD card initialized" message on boot? [ ] Yes [ ] No
+- [ ] config.yaml loaded successfully? [ ] Yes [ ] No
+- [ ] Logging to hydro.csv works? [ ] Yes [ ] No (run for 1 min, check file)
+- [ ] **PASS/FAIL**: ______
+
+### Safety System Tests
+
+#### Emergency Stop
+- [ ] Press 'e' for emergency stop
+- [ ] All pumps stop immediately? [ ] Yes [ ] No
+- [ ] Display shows "E-STOP"? [ ] Yes [ ] No
+- [ ] Press 'x' to clear emergency stop
+- [ ] Normal operation resumes? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+#### Sensor Fault Detection
+- [ ] Disconnect temperature sensor
+- [ ] Fault detected within 10 seconds? [ ] Yes [ ] No
+- [ ] Reconnect sensor, fault clears? [ ] Yes [ ] No
+- [ ] **PASS/FAIL**: ______
+
+### Full System Integration Test
+
+Run the system for 30 minutes with all sensors and pumps connected:
+
+- [ ] All sensor readings remain stable
+- [ ] No unexpected pump activations
+- [ ] Controller responds to setpoint deviations
+- [ ] Log file records data correctly
+- [ ] No error messages in Serial Monitor
+- [ ] Display updates correctly
+- [ ] System doesn't crash or freeze
+
+### Final Checks Before Deployment
+
+- [ ] All connections secure (give wires a gentle tug)
+- [ ] Enclosure protects electronics from splashes
+- [ ] Sensors positioned correctly in tank
+- [ ] Pump tubing secured and not kinked
+- [ ] Power supply adequate (not getting hot)
+- [ ] SD card has plenty of space
+- [ ] Backup of config.yaml saved somewhere
+
+### Sign-Off
+
+**Tested by**: _______________________
+
+**Date**: _______________________
+
+**Overall Result**: [ ] PASS - Ready for deployment [ ] FAIL - Needs fixes
+
+**Notes**:
+_________________________________________
+_________________________________________
+_________________________________________
+
+*Pro tip: Take a photo of your wiring before closing up the enclosure. Future you will thank present you when something inevitably needs debugging.*
