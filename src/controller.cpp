@@ -406,7 +406,7 @@ void FeedforwardController::updateDisturbanceEstimates(const SensorReadings& pre
 }
 
 // ============================================================================
-// ACTUATOR DRIVER IMPLEMENTATION
+// ACTUATOR DRIVER IMPLEMENTATION (Non-blocking)
 // ============================================================================
 
 ActuatorDriver::ActuatorDriver() {
@@ -418,9 +418,9 @@ ActuatorDriver::ActuatorDriver() {
     pumpFlowRates_[4] = VALVE_WATER_FLOW_RATE;
     pumpFlowRates_[5] = 0.0f;  // Circulation pump (not a dosing pump)
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < NUM_PUMPS; i++) {
         totalDosed_[i] = 0.0f;
-        pumpStates_[i] = false;
+        pumpTimers_[i].clear();
     }
 }
 
@@ -437,56 +437,97 @@ void ActuatorDriver::begin() {
 #endif
 }
 
+void ActuatorDriver::update() {
+    // Process all pump timers - this is the non-blocking magic
+    processTimers();
+}
+
+void ActuatorDriver::processTimers() {
+    uint32_t now = millis();
+
+    for (int i = 0; i < NUM_PUMPS; i++) {
+        if (pumpTimers_[i].active) {
+            uint32_t elapsed = now - pumpTimers_[i].startTime;
+
+            if (elapsed >= pumpTimers_[i].durationMs) {
+                // Timer expired - turn off pump
+                uint8_t pin = indexToPin(i);
+#ifdef ARDUINO
+                digitalWrite(pin, LOW);
+#endif
+                // Record the dosed volume
+                totalDosed_[i] += pumpTimers_[i].volumeMl;
+
+                // Clear the timer
+                pumpTimers_[i].clear();
+            }
+        }
+    }
+}
+
 void ActuatorDriver::execute(const ControlAction& action) {
+    // Schedule each pump to run (non-blocking)
     if (action.phDownDoseMl > 0.01f) {
-        doseVolume(PIN_PUMP_PH_DOWN, action.phDownDoseMl, pumpFlowRates_[0]);
-        totalDosed_[0] += action.phDownDoseMl;
+        float durationSec = action.phDownDoseMl / pumpFlowRates_[0];
+        startPumpTimer(PIN_PUMP_PH_DOWN, durationSec, action.phDownDoseMl);
     }
 
     if (action.phUpDoseMl > 0.01f) {
-        doseVolume(PIN_PUMP_PH_UP, action.phUpDoseMl, pumpFlowRates_[1]);
-        totalDosed_[1] += action.phUpDoseMl;
+        float durationSec = action.phUpDoseMl / pumpFlowRates_[1];
+        startPumpTimer(PIN_PUMP_PH_UP, durationSec, action.phUpDoseMl);
     }
 
     if (action.nutrientADoseMl > 0.01f) {
-        doseVolume(PIN_PUMP_NUTRIENT_A, action.nutrientADoseMl, pumpFlowRates_[2]);
-        totalDosed_[2] += action.nutrientADoseMl;
+        float durationSec = action.nutrientADoseMl / pumpFlowRates_[2];
+        startPumpTimer(PIN_PUMP_NUTRIENT_A, durationSec, action.nutrientADoseMl);
     }
 
     if (action.nutrientBDoseMl > 0.01f) {
-        doseVolume(PIN_PUMP_NUTRIENT_B, action.nutrientBDoseMl, pumpFlowRates_[3]);
-        totalDosed_[3] += action.nutrientBDoseMl;
+        float durationSec = action.nutrientBDoseMl / pumpFlowRates_[3];
+        startPumpTimer(PIN_PUMP_NUTRIENT_B, durationSec, action.nutrientBDoseMl);
     }
 
     if (action.freshWaterMl > 0.01f) {
-        doseVolume(PIN_VALVE_FRESH_WATER, action.freshWaterMl, pumpFlowRates_[4]);
-        totalDosed_[4] += action.freshWaterMl;
+        float durationSec = action.freshWaterMl / pumpFlowRates_[4];
+        startPumpTimer(PIN_VALVE_FRESH_WATER, durationSec, action.freshWaterMl);
     }
 
+    // Circulation pump is direct control (not timed)
 #ifdef ARDUINO
     digitalWrite(PIN_PUMP_CIRCULATION, action.circulationPumpOn ? HIGH : LOW);
 #endif
-    pumpStates_[5] = action.circulationPumpOn;
+    pumpTimers_[5].active = action.circulationPumpOn;
 }
 
-void ActuatorDriver::doseVolume(uint8_t pumpPin, float volumeMl, float flowRate) {
-    if (flowRate <= 0 || volumeMl <= 0) return;
+void ActuatorDriver::startPumpTimer(uint8_t pumpPin, float durationSec, float volumeMl) {
+    if (durationSec <= 0 || volumeMl <= 0) return;
 
-    float durationSec = volumeMl / flowRate;
+    int idx = pinToIndex(pumpPin);
+    if (idx < 0 || idx >= NUM_PUMPS) return;
 
+    // If pump is already running, don't interrupt
+    if (pumpTimers_[idx].active) return;
+
+    // Start the pump
 #ifdef ARDUINO
     digitalWrite(pumpPin, HIGH);
-    delay((unsigned long)(durationSec * 1000));
-    digitalWrite(pumpPin, LOW);
 #endif
+
+    // Set up the timer
+    pumpTimers_[idx].pin = pumpPin;
+    pumpTimers_[idx].startTime = millis();
+    pumpTimers_[idx].durationMs = (uint32_t)(durationSec * 1000.0f);
+    pumpTimers_[idx].active = true;
+    pumpTimers_[idx].volumeMl = volumeMl;
 }
 
 void ActuatorDriver::runPump(uint8_t pumpPin, float durationSec) {
-#ifdef ARDUINO
-    digitalWrite(pumpPin, HIGH);
-    delay((unsigned long)(durationSec * 1000));
-    digitalWrite(pumpPin, LOW);
-#endif
+    // Non-blocking version - just schedules the pump
+    int idx = pinToIndex(pumpPin);
+    if (idx >= 0 && idx < NUM_PUMPS) {
+        float volumeMl = durationSec * pumpFlowRates_[idx];
+        startPumpTimer(pumpPin, durationSec, volumeMl);
+    }
 }
 
 void ActuatorDriver::stopAllPumps() {
@@ -499,8 +540,9 @@ void ActuatorDriver::stopAllPumps() {
     digitalWrite(PIN_PUMP_CIRCULATION, LOW);
 #endif
 
-    for (int i = 0; i < 6; i++) {
-        pumpStates_[i] = false;
+    // Clear all timers
+    for (int i = 0; i < NUM_PUMPS; i++) {
+        pumpTimers_[i].clear();
     }
 }
 
@@ -510,34 +552,72 @@ void ActuatorDriver::setCirculationSpeed(uint8_t speed) {
 #endif
 }
 
-bool ActuatorDriver::isPumpRunning(uint8_t pumpPin) const {
-    // Map pin to index
-    int idx = -1;
-    if (pumpPin == PIN_PUMP_PH_DOWN) idx = 0;
-    else if (pumpPin == PIN_PUMP_PH_UP) idx = 1;
-    else if (pumpPin == PIN_PUMP_NUTRIENT_A) idx = 2;
-    else if (pumpPin == PIN_PUMP_NUTRIENT_B) idx = 3;
-    else if (pumpPin == PIN_VALVE_FRESH_WATER) idx = 4;
-    else if (pumpPin == PIN_PUMP_CIRCULATION) idx = 5;
+int ActuatorDriver::pinToIndex(uint8_t pin) const {
+    if (pin == PIN_PUMP_PH_DOWN) return 0;
+    if (pin == PIN_PUMP_PH_UP) return 1;
+    if (pin == PIN_PUMP_NUTRIENT_A) return 2;
+    if (pin == PIN_PUMP_NUTRIENT_B) return 3;
+    if (pin == PIN_VALVE_FRESH_WATER) return 4;
+    if (pin == PIN_PUMP_CIRCULATION) return 5;
+    return -1;
+}
 
-    if (idx >= 0) return pumpStates_[idx];
+uint8_t ActuatorDriver::indexToPin(int index) const {
+    switch (index) {
+        case 0: return PIN_PUMP_PH_DOWN;
+        case 1: return PIN_PUMP_PH_UP;
+        case 2: return PIN_PUMP_NUTRIENT_A;
+        case 3: return PIN_PUMP_NUTRIENT_B;
+        case 4: return PIN_VALVE_FRESH_WATER;
+        case 5: return PIN_PUMP_CIRCULATION;
+        default: return 0;
+    }
+}
+
+bool ActuatorDriver::isPumpRunning(uint8_t pumpPin) const {
+    int idx = pinToIndex(pumpPin);
+    if (idx >= 0 && idx < NUM_PUMPS) {
+        return pumpTimers_[idx].active;
+    }
     return false;
 }
 
-float ActuatorDriver::getTotalDosedMl(uint8_t pumpPin) const {
-    int idx = -1;
-    if (pumpPin == PIN_PUMP_PH_DOWN) idx = 0;
-    else if (pumpPin == PIN_PUMP_PH_UP) idx = 1;
-    else if (pumpPin == PIN_PUMP_NUTRIENT_A) idx = 2;
-    else if (pumpPin == PIN_PUMP_NUTRIENT_B) idx = 3;
-    else if (pumpPin == PIN_VALVE_FRESH_WATER) idx = 4;
+bool ActuatorDriver::isAnyPumpRunning() const {
+    for (int i = 0; i < NUM_PUMPS; i++) {
+        if (pumpTimers_[i].active) return true;
+    }
+    return false;
+}
 
-    if (idx >= 0) return totalDosed_[idx];
+bool ActuatorDriver::isDosingInProgress() const {
+    // Check if any dosing pump is running (not circulation)
+    for (int i = 0; i < 5; i++) {
+        if (pumpTimers_[i].active) return true;
+    }
+    return false;
+}
+
+uint32_t ActuatorDriver::getRemainingTime(uint8_t pumpPin) const {
+    int idx = pinToIndex(pumpPin);
+    if (idx >= 0 && idx < NUM_PUMPS && pumpTimers_[idx].active) {
+        uint32_t elapsed = millis() - pumpTimers_[idx].startTime;
+        if (elapsed < pumpTimers_[idx].durationMs) {
+            return pumpTimers_[idx].durationMs - elapsed;
+        }
+    }
+    return 0;
+}
+
+float ActuatorDriver::getTotalDosedMl(uint8_t pumpPin) const {
+    int idx = pinToIndex(pumpPin);
+    if (idx >= 0 && idx < NUM_PUMPS) {
+        return totalDosed_[idx];
+    }
     return 0.0f;
 }
 
 void ActuatorDriver::resetDoseCounters() {
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < NUM_PUMPS; i++) {
         totalDosed_[i] = 0.0f;
     }
 }

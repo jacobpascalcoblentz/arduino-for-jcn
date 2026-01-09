@@ -212,7 +212,29 @@ private:
 // ============================================================================
 
 /**
- * @brief Converts control actions to hardware outputs
+ * @brief Non-blocking pump state for timer-based control
+ */
+struct PumpTimer {
+    uint8_t pin;
+    uint32_t startTime;
+    uint32_t durationMs;
+    bool active;
+    float volumeMl;  // For tracking total dosed
+
+    void clear() {
+        pin = 0;
+        startTime = 0;
+        durationMs = 0;
+        active = false;
+        volumeMl = 0.0f;
+    }
+};
+
+/**
+ * @brief Converts control actions to hardware outputs (non-blocking)
+ *
+ * Uses timer-based approach instead of blocking delay() calls.
+ * Call update() frequently from main loop to process pump timers.
  */
 class ActuatorDriver {
 public:
@@ -220,11 +242,18 @@ public:
 
     void begin();
 
-    // Execute control action
+    // IMPORTANT: Call this frequently from main loop!
+    // Processes pump timers and turns off pumps when done
+    void update();
+
+    // Execute control action (non-blocking - schedules pump runs)
     void execute(const ControlAction& action);
 
     // Direct pump control (for manual/calibration)
+    // Non-blocking - schedules the pump to run
     void runPump(uint8_t pumpPin, float durationSec);
+
+    // Immediately stop all pumps
     void stopAllPumps();
 
     // PWM speed control for main pump
@@ -232,15 +261,30 @@ public:
 
     // Status
     bool isPumpRunning(uint8_t pumpPin) const;
+    bool isAnyPumpRunning() const;
+    bool isDosingInProgress() const;
     float getTotalDosedMl(uint8_t pumpPin) const;
     void resetDoseCounters();
 
-private:
-    float pumpFlowRates_[6];      // mL/sec for each pump
-    float totalDosed_[6];         // Running total
-    bool pumpStates_[6];
+    // Get remaining time for active pump (ms)
+    uint32_t getRemainingTime(uint8_t pumpPin) const;
 
-    void doseVolume(uint8_t pumpPin, float volumeMl, float flowRate);
+private:
+    static const int NUM_PUMPS = 6;
+
+    float pumpFlowRates_[NUM_PUMPS];    // mL/sec for each pump
+    float totalDosed_[NUM_PUMPS];       // Running total
+    PumpTimer pumpTimers_[NUM_PUMPS];   // Non-blocking timers
+
+    // Map pin to index
+    int pinToIndex(uint8_t pin) const;
+    uint8_t indexToPin(int index) const;
+
+    // Internal: start pump with timer (non-blocking)
+    void startPumpTimer(uint8_t pumpPin, float durationSec, float volumeMl);
+
+    // Internal: check and process expired timers
+    void processTimers();
 };
 
 // ============================================================================

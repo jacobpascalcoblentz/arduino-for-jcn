@@ -715,3 +715,221 @@ _________________________________________
 _________________________________________
 
 *Pro tip: Take a photo of your wiring before closing up the enclosure. Future you will thank present you when something inevitably needs debugging.*
+
+---
+
+## ESP32 WiFi Setup Guide
+
+Want to monitor your hydroponics system from your phone while pretending to work? This section is for you.
+
+### Why ESP32?
+
+The ESP32 is like an Arduino that went to college. It has:
+- Built-in WiFi (no shields needed)
+- More memory (your plants' data needs a home)
+- Faster processor (for those sweet, sweet web dashboards)
+- Bluetooth too (because why not)
+
+### Hardware Changes for ESP32
+
+If you're switching from Arduino Mega to ESP32, here are the pin changes:
+
+| Function | Arduino Mega | ESP32 |
+|----------|-------------|-------|
+| pH Sensor | A0 | GPIO 36 (VP) |
+| TDS Sensor | A2 | GPIO 39 (VN) |
+| Temperature | D2 | GPIO 4 |
+| Ultrasonic Trig | D3 | GPIO 5 |
+| Ultrasonic Echo | D4 | GPIO 18 |
+| pH Down Pump | D5 | GPIO 19 |
+| pH Up Pump | D6 | GPIO 21 |
+| Nutrient A Pump | D7 | GPIO 22 |
+| Nutrient B Pump | D8 | GPIO 23 |
+| Fresh Water Valve | D9 | GPIO 25 |
+| Circulation Pump | D10 | GPIO 26 |
+| SD Card CS | D53 | GPIO 5 |
+
+**Important Notes:**
+- ESP32 analog pins are 12-bit (0-4095) vs Arduino's 10-bit (0-1023)
+- ESP32 runs on 3.3V logic - use level shifters for 5V sensors!
+- Some GPIO pins have restrictions (GPIO 6-11 are for flash, avoid them)
+
+### Building for ESP32
+
+1. In VS Code with PlatformIO, click the environment selector (bottom blue bar)
+2. Select `env:esp32`
+3. Click the Upload button (→)
+
+Or from command line:
+```bash
+pio run -e esp32 -t upload
+```
+
+### WiFi Configuration
+
+#### Method 1: Edit config.yaml (Recommended)
+
+Add WiFi settings to your `config.yaml` on the SD card:
+
+```yaml
+wifi:
+  ssid: "YourNetworkName"
+  password: "YourWiFiPassword"
+  hostname: "hydroponics"    # Optional - how it appears on network
+
+  # Optional: Static IP (leave out for DHCP)
+  # static_ip: "192.168.1.100"
+  # gateway: "192.168.1.1"
+  # subnet: "255.255.255.0"
+```
+
+#### Method 2: AP Mode (No Config Needed)
+
+If you don't configure WiFi or it can't connect:
+
+1. The ESP32 creates its own WiFi network called `hydroponics`
+2. Password is `hydroponics123`
+3. Connect your phone/laptop to this network
+4. Browse to `http://192.168.4.1`
+
+This is useful for:
+- Initial setup
+- When your router dies
+- Growing "tomatoes" in a location without internet access
+
+### Accessing the Dashboard
+
+Once connected to WiFi:
+
+1. Find the IP address:
+   - Check Serial Monitor on boot
+   - Or check your router's connected devices
+   - Or use `http://hydroponics.local` if your network supports mDNS
+
+2. Open a web browser and go to that IP address
+
+3. You'll see a beautiful dashboard with:
+   - Real-time pH, temperature, TDS, and water level
+   - Color-coded status indicators (green = good, yellow = warning, red = bad)
+   - Auto-refresh every 2 seconds
+
+### API Endpoints
+
+For the nerds who want to integrate with home automation:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Web dashboard (HTML) |
+| `/api/sensors` | GET | Current sensor readings (JSON) |
+| `/api/config` | GET | System configuration (JSON) |
+
+#### Example: Get Sensor Data
+
+```bash
+curl http://192.168.1.100/api/sensors
+```
+
+Returns:
+```json
+{
+  "ph": 6.52,
+  "temperature": 24.3,
+  "tds": 823,
+  "level": 78,
+  "uptime": 3600,
+  "valid": true
+}
+```
+
+### Home Assistant Integration
+
+Add to your `configuration.yaml`:
+
+```yaml
+sensor:
+  - platform: rest
+    name: "Hydroponics pH"
+    resource: http://192.168.1.100/api/sensors
+    value_template: "{{ value_json.ph }}"
+    unit_of_measurement: "pH"
+    scan_interval: 30
+
+  - platform: rest
+    name: "Hydroponics Temperature"
+    resource: http://192.168.1.100/api/sensors
+    value_template: "{{ value_json.temperature }}"
+    unit_of_measurement: "°C"
+    scan_interval: 30
+
+  - platform: rest
+    name: "Hydroponics TDS"
+    resource: http://192.168.1.100/api/sensors
+    value_template: "{{ value_json.tds }}"
+    unit_of_measurement: "ppm"
+    scan_interval: 30
+
+  - platform: rest
+    name: "Hydroponics Water Level"
+    resource: http://192.168.1.100/api/sensors
+    value_template: "{{ value_json.level }}"
+    unit_of_measurement: "%"
+    scan_interval: 30
+```
+
+### MQTT (Coming Soon)
+
+For those who want real-time updates without polling:
+
+```yaml
+wifi:
+  # ... your wifi settings ...
+
+mqtt:
+  enabled: true
+  server: "192.168.1.50"
+  port: 1883
+  username: "hydro"          # Optional
+  password: "secret"         # Optional
+  topic: "hydroponics/sensors"
+  publish_interval_sec: 5
+```
+
+The controller will publish JSON to your MQTT broker:
+```
+hydroponics/sensors → {"ph":6.5,"temp":24.3,"tds":800,"level":80}
+```
+
+### Troubleshooting WiFi
+
+**Can't connect to WiFi:**
+- Double-check SSID and password (case-sensitive!)
+- Make sure your router is 2.4GHz (ESP32 doesn't support 5GHz)
+- Try moving closer to the router
+- Check Serial Monitor for error messages
+
+**Dashboard not loading:**
+- Verify you're on the same network
+- Try the IP address directly instead of hostname
+- Check if another device has the same IP (static IP conflict)
+
+**Connection keeps dropping:**
+- ESP32 might be too far from router
+- WiFi interference from other devices
+- Power supply might be inadequate (ESP32 needs stable 3.3V)
+
+**AP Mode not appearing:**
+- Wait 30 seconds after boot
+- Make sure ESP32 is powered properly
+- Check Serial Monitor - it logs the AP name and IP
+
+### Security Considerations
+
+**WARNING: This is a basic implementation without authentication.**
+
+Do NOT expose this directly to the internet unless you:
+1. Add password authentication (modify `wifi_logger.cpp`)
+2. Use HTTPS (requires SSL certificates)
+3. Put it behind a VPN or reverse proxy
+4. Enable your router's guest network isolation
+
+For home networks, it's generally fine. For commercial grows... hire a security consultant. And maybe a lawyer.
