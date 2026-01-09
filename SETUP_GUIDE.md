@@ -375,7 +375,118 @@ pumps:
 
 Yes, you actually have to do this part. No, you can't skip it. I know you want to.
 
-### pH Sensor Calibration
+### Quick Calibration (Serial Commands)
+
+For quick calibration via serial commands:
+
+1. Connect to the Arduino via USB and open Serial Monitor (115200 baud)
+2. Type `c` and press Enter to enter calibration mode
+3. Follow the prompts for each sensor
+4. Type `q` to exit calibration mode
+
+**Quick Reference:**
+| Key | Action |
+|-----|--------|
+| 1 | Calibrate pH 7.0 point |
+| 2 | Calibrate pH 4.0 point |
+| 3 | Calibrate TDS (enter known value) |
+| 4 | Set water level empty point |
+| 5 | Set water level full point |
+| 6 | Test pH down pump |
+| 7 | Test pH up pump |
+| 8 | Test nutrient pump |
+| q | Exit calibration mode |
+
+### Interactive Calibration Wizard
+
+For a more guided experience, use the Calibration Wizard. It's like a video game tutorial, but for plant science.
+
+**Starting the Wizard:**
+
+1. Connect via USB and open Serial Monitor (115200 baud)
+2. Type `c` to enter calibration mode
+3. You'll see the main menu:
+
+```
+========================================
+   HYDROPONICS CALIBRATION WIZARD
+========================================
+Press 'q' at any time to exit
+
+--- Main Menu ---
+1. Calibrate pH Sensor
+2. Calibrate TDS Sensor
+3. Calibrate Water Level Sensor
+4. Test Pumps
+5. Save Calibration to EEPROM
+6. Load Calibration from EEPROM
+
+Enter choice:
+```
+
+**pH Calibration (Two-Point):**
+
+1. Select `1` for pH Calibration
+2. Select `1` for pH 7.0 calibration
+3. Rinse probe with distilled water, place in pH 7.0 buffer
+4. Wait for the voltage reading to stabilize (watch the display)
+5. Press Enter or `s` to sample
+6. The wizard takes 30 samples over 3 seconds (progress bar shown)
+7. Repeat with `2` for pH 4.0 buffer
+8. Press `b` to go back to main menu
+
+**TDS Calibration:**
+
+1. Select `2` for TDS Calibration
+2. Select `1` to calibrate with 1000 ppm solution
+3. Place probe in calibration solution
+4. Wait for reading to stabilize
+5. Press Enter to sample
+6. The wizard calculates and applies the calibration factor
+
+**Water Level Calibration:**
+
+1. Select `3` for Water Level Calibration
+2. Select `1` to set empty point (tank empty or sensor pointing at floor)
+3. Press Enter to sample
+4. Select `2` to set full point (tank at max level)
+5. Press Enter to sample
+6. Tank height is automatically calculated
+
+**Pump Testing:**
+
+1. Select `4` for Pump Test
+2. Select pump number (1-5)
+3. Pump runs for 2 seconds
+4. Verify liquid flows through tubing
+5. Have paper towels ready (things will get wet)
+
+```
+--- Pump Test ---
+1. Test pH Down pump
+2. Test pH Up pump
+3. Test Nutrient A pump
+4. Test Nutrient B pump
+5. Test Fresh Water valve
+b. Back to main menu
+```
+
+**Saving Calibration:**
+
+Your calibration data is stored in EEPROM (survives power cycles):
+
+- Select `5` to save current calibration
+- Select `6` to load previously saved calibration
+- On exit, you'll be asked if you want to save
+
+**Pro Tips:**
+- Let sensors stabilize for at least 60 seconds in calibration solutions
+- Rinse probes with distilled water between solutions
+- pH probes should be stored in storage solution, not water
+- Calibrate at room temperature for best accuracy
+- Re-calibrate monthly, or when readings seem off
+
+### pH Sensor Calibration (Detailed)
 
 You'll need pH calibration solutions (usually pH 4.0 and pH 7.0).
 
@@ -388,7 +499,7 @@ You'll need pH calibration solutions (usually pH 4.0 and pH 7.0).
 7. Type `2` and press Enter
 8. Type `q` to exit calibration mode
 
-### TDS Sensor Calibration
+### TDS Sensor Calibration (Detailed)
 
 You'll need a TDS calibration solution (usually 1000 ppm).
 
@@ -398,7 +509,7 @@ You'll need a TDS calibration solution (usually 1000 ppm).
 4. Type the known TDS value (e.g., `1000`) and press Enter
 5. Type `q` to exit
 
-### Water Level Calibration
+### Water Level Calibration (Detailed)
 
 1. Enter calibration mode (type `c`)
 2. With tank EMPTY, type `4` and press Enter (records empty distance)
