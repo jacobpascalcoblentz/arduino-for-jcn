@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  bazel-build:
+    name: Bazel Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bazel
+      uses: bazel-contrib/setup-bazel@0.8.5
+      with:
+        bazelisk-cache: true
+        disk-cache: ${{ github.workflow }}
+        repository-cache: true
+
+    - name: Build library
+      run: bazel build //:hydro_lib
+
+    - name: Run all tests
+      run: bazel test //... --test_output=errors
+
+    - name: Test summary
+      if: always()
+      run: |
+        echo "=== Test Results ==="
+        bazel test //... --test_output=summary || true
+
+  platformio-build:
+    name: PlatformIO Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install platformio
+
+    - name: Build for Arduino Mega
+      run: pio run -e mega2560
+
+    - name: Build for ESP32
+      run: pio run -e esp32
+
+    - name: Report firmware size
+      run: |
+        echo "=== Arduino Mega Firmware Size ==="
+        pio run -e mega2560 -t size || true
+        echo ""
+        echo "=== ESP32 Firmware Size ==="
+        pio run -e esp32 -t size || true

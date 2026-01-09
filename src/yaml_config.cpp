@@ -549,40 +549,208 @@ void ConfigLoader::printConfig(const HydroConfig& config) {
 }
 
 bool ConfigLoader::validateConfig(const HydroConfig& config, char* errorMsg) {
-    // pH validation
+    // =========================================================================
+    // SETPOINT VALIDATION
+    // =========================================================================
+
+    // pH setpoint (hydroponics typically 5.5-7.0, allow 3-10 for flexibility)
     if (config.phSetpoint < 3.0f || config.phSetpoint > 10.0f) {
         strcpy(errorMsg, "pH setpoint out of range (3-10)");
         return false;
     }
-    if (config.phMin >= config.phMax) {
-        strcpy(errorMsg, "pH min must be less than max");
-        return false;
-    }
 
-    // TDS validation
+    // TDS setpoint (0-3000 ppm covers most hydroponic needs)
     if (config.tdsSetpoint < 0.0f || config.tdsSetpoint > 3000.0f) {
-        strcpy(errorMsg, "TDS setpoint out of range (0-3000)");
+        strcpy(errorMsg, "TDS setpoint out of range (0-3000 ppm)");
         return false;
     }
 
-    // Temperature validation
-    if (config.temperatureSetpoint < 10.0f || config.temperatureSetpoint > 40.0f) {
-        strcpy(errorMsg, "Temperature setpoint out of range (10-40)");
+    // Temperature setpoint (plants generally need 15-30°C)
+    if (config.temperatureSetpoint < 5.0f || config.temperatureSetpoint > 40.0f) {
+        strcpy(errorMsg, "Temperature setpoint out of range (5-40 C)");
         return false;
     }
 
-    // Level validation
-    if (config.waterLevelSetpoint < 0.0f || config.waterLevelSetpoint > 100.0f) {
-        strcpy(errorMsg, "Water level setpoint out of range (0-100)");
+    // Water level setpoint
+    if (config.waterLevelSetpoint < 10.0f || config.waterLevelSetpoint > 100.0f) {
+        strcpy(errorMsg, "Water level setpoint out of range (10-100%)");
         return false;
     }
 
-    // System volume validation
-    if (config.systemVolumeLiters <= 0.0f) {
-        strcpy(errorMsg, "System volume must be positive");
+    // =========================================================================
+    // SAFETY LIMIT VALIDATION
+    // =========================================================================
+
+    // pH limits
+    if (config.phMin < 0.0f || config.phMin > 14.0f) {
+        strcpy(errorMsg, "pH min out of range (0-14)");
+        return false;
+    }
+    if (config.phMax < 0.0f || config.phMax > 14.0f) {
+        strcpy(errorMsg, "pH max out of range (0-14)");
+        return false;
+    }
+    if (config.phMin >= config.phMax) {
+        strcpy(errorMsg, "pH min must be less than pH max");
+        return false;
+    }
+    if (config.phSetpoint < config.phMin || config.phSetpoint > config.phMax) {
+        strcpy(errorMsg, "pH setpoint outside safety limits");
         return false;
     }
 
+    // TDS limits
+    if (config.tdsMin < 0.0f || config.tdsMax > 5000.0f) {
+        strcpy(errorMsg, "TDS limits out of range (0-5000)");
+        return false;
+    }
+    if (config.tdsMin >= config.tdsMax) {
+        strcpy(errorMsg, "TDS min must be less than TDS max");
+        return false;
+    }
+
+    // Temperature limits
+    if (config.tempMin >= config.tempMax) {
+        strcpy(errorMsg, "Temp min must be less than temp max");
+        return false;
+    }
+
+    // Level limits
+    if (config.levelMin < 0.0f || config.levelMax > 100.0f) {
+        strcpy(errorMsg, "Level limits out of range (0-100%)");
+        return false;
+    }
+    if (config.levelMin >= config.levelMax) {
+        strcpy(errorMsg, "Level min must be less than level max");
+        return false;
+    }
+
+    // =========================================================================
+    // DEADBAND VALIDATION
+    // =========================================================================
+
+    if (config.phDeadband < 0.0f || config.phDeadband > 2.0f) {
+        strcpy(errorMsg, "pH deadband out of range (0-2)");
+        return false;
+    }
+    if (config.tdsDeadband < 0.0f || config.tdsDeadband > 500.0f) {
+        strcpy(errorMsg, "TDS deadband out of range (0-500)");
+        return false;
+    }
+    if (config.waterLevelDeadband < 0.0f || config.waterLevelDeadband > 20.0f) {
+        strcpy(errorMsg, "Level deadband out of range (0-20)");
+        return false;
+    }
+
+    // =========================================================================
+    // DOSING LIMIT VALIDATION
+    // =========================================================================
+
+    if (config.maxPhDoseMl <= 0.0f || config.maxPhDoseMl > 100.0f) {
+        strcpy(errorMsg, "Max pH dose out of range (0-100 mL)");
+        return false;
+    }
+    if (config.maxNutrientDoseMl <= 0.0f || config.maxNutrientDoseMl > 200.0f) {
+        strcpy(errorMsg, "Max nutrient dose out of range (0-200 mL)");
+        return false;
+    }
+    if (config.minDoseIntervalSec < 60) {
+        strcpy(errorMsg, "Min dose interval too short (min 60 sec)");
+        return false;
+    }
+
+    // =========================================================================
+    // SYSTEM PARAMETER VALIDATION
+    // =========================================================================
+
+    if (config.systemVolumeLiters <= 0.0f || config.systemVolumeLiters > 10000.0f) {
+        strcpy(errorMsg, "System volume out of range (0-10000 L)");
+        return false;
+    }
+    if (config.tankHeightCm <= 0.0f || config.tankHeightCm > 500.0f) {
+        strcpy(errorMsg, "Tank height out of range (0-500 cm)");
+        return false;
+    }
+    if (config.tankAreaCm2 <= 0.0f) {
+        strcpy(errorMsg, "Tank area must be positive");
+        return false;
+    }
+
+    // =========================================================================
+    // PUMP FLOW RATE VALIDATION
+    // =========================================================================
+
+    if (config.phDownFlowRate <= 0.0f || config.phDownFlowRate > 50.0f) {
+        strcpy(errorMsg, "pH down flow rate out of range (0-50 mL/s)");
+        return false;
+    }
+    if (config.phUpFlowRate <= 0.0f || config.phUpFlowRate > 50.0f) {
+        strcpy(errorMsg, "pH up flow rate out of range (0-50 mL/s)");
+        return false;
+    }
+    if (config.nutrientAFlowRate <= 0.0f || config.nutrientAFlowRate > 50.0f) {
+        strcpy(errorMsg, "Nutrient A flow rate out of range (0-50 mL/s)");
+        return false;
+    }
+
+    // =========================================================================
+    // CONTROLLER GAIN VALIDATION
+    // =========================================================================
+
+    if (config.ffPhGain < 0.0f || config.ffPhGain > 2.0f) {
+        strcpy(errorMsg, "FF pH gain out of range (0-2)");
+        return false;
+    }
+    if (config.ffTdsGain < 0.0f || config.ffTdsGain > 2.0f) {
+        strcpy(errorMsg, "FF TDS gain out of range (0-2)");
+        return false;
+    }
+    if (config.ffLevelGain < 0.0f || config.ffLevelGain > 2.0f) {
+        strcpy(errorMsg, "FF level gain out of range (0-2)");
+        return false;
+    }
+
+    // Integral gains (should be small to avoid oscillation)
+    if (config.kiPh < 0.0f || config.kiPh > 1.0f) {
+        strcpy(errorMsg, "Ki pH out of range (0-1)");
+        return false;
+    }
+    if (config.kiTds < 0.0f || config.kiTds > 1.0f) {
+        strcpy(errorMsg, "Ki TDS out of range (0-1)");
+        return false;
+    }
+
+    // =========================================================================
+    // TIMING VALIDATION
+    // =========================================================================
+
+    if (config.sensorReadMs < 100 || config.sensorReadMs > 60000) {
+        strcpy(errorMsg, "Sensor read interval out of range (100-60000 ms)");
+        return false;
+    }
+    if (config.controlUpdateMs < 1000 || config.controlUpdateMs > 300000) {
+        strcpy(errorMsg, "Control update interval out of range (1-300 sec)");
+        return false;
+    }
+    if (config.logIntervalMs < 1000 || config.logIntervalMs > 3600000) {
+        strcpy(errorMsg, "Log interval out of range (1 sec - 1 hour)");
+        return false;
+    }
+
+    // =========================================================================
+    // CALIBRATION VALIDATION
+    // =========================================================================
+
+    if (config.phNeutralMv <= 0.0f || config.phNeutralMv > 5000.0f) {
+        strcpy(errorMsg, "pH neutral voltage out of range (0-5000 mV)");
+        return false;
+    }
+    if (config.tdsCalibrationFactor <= 0.0f || config.tdsCalibrationFactor > 10.0f) {
+        strcpy(errorMsg, "TDS calibration factor out of range (0-10)");
+        return false;
+    }
+
+    // All validations passed
     errorMsg[0] = '\0';
     return true;
 }
