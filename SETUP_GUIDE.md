@@ -182,20 +182,86 @@ CS               →    D53
 
 ## Installing the Software
 
-### Option A: Using Pre-Built Firmware (Easiest)
+You'll install a program called PlatformIO that handles everything for you. Just follow these steps exactly.
+
+### Step 1: Install Visual Studio Code
+
+1. Go to https://code.visualstudio.com/
+2. Click the big **Download** button
+3. Run the installer
+4. Open Visual Studio Code when it's done
+
+### Step 2: Install PlatformIO Extension
+
+1. In VS Code, click the **Extensions** icon on the left sidebar (looks like 4 squares)
+2. In the search box, type `PlatformIO`
+3. Click **Install** on "PlatformIO IDE"
+4. Wait for it to finish (may take a few minutes)
+5. **Restart VS Code** when prompted
+
+### Step 3: Download This Project
+
+1. Go to https://github.com/jacobpascalcoblentz/arduino-for-jcn
+2. Click the green **Code** button
+3. Click **Download ZIP**
+4. Extract the ZIP file somewhere you'll remember (like your Desktop)
+
+### Step 4: Open the Project
+
+1. In VS Code, click **File → Open Folder**
+2. Navigate to the extracted folder (`arduino-for-jcn-main`)
+3. Click **Select Folder**
+4. Wait for PlatformIO to load (you'll see activity in the bottom bar)
+
+### Step 5: Connect Your Arduino
+
+1. Plug in your Arduino Mega 2560 via USB cable
+2. Wait a few seconds for your computer to recognize it
+
+### Step 6: Upload the Firmware
+
+1. Look at the bottom blue bar in VS Code
+2. Click the **→** (right arrow) button - this is "Upload"
+3. Wait for it to compile and upload (first time takes a few minutes)
+4. You should see **SUCCESS** in the terminal
+
+**That's it!** The firmware is now on your Arduino.
+
+### If Something Goes Wrong
+
+**"No device found" error:**
+- Make sure Arduino is plugged in
+- Try a different USB cable
+- Try a different USB port
+
+**"Access denied" error (Windows):**
+- Close any other programs that might be using the Arduino (like Arduino IDE)
+
+**Compilation errors:**
+- Make sure you extracted the full ZIP file
+- Try **Terminal → Run Task → PlatformIO: Clean** then upload again
+
+### Updating the Firmware Later
+
+If you get an updated version:
+1. Download the new ZIP
+2. Extract it
+3. Open the folder in VS Code
+4. Click the Upload button (→)
+
+---
+
+### Alternative: Arduino IDE (if PlatformIO doesn't work)
 
 1. Download Arduino IDE from https://www.arduino.cc/en/software
-2. Install it on your computer
-3. Ask your programmer friend to send you the `.hex` file
-4. Use Arduino IDE to upload it to your board
-
-### Option B: Have Someone Build It For You
-
-Send these files to someone who programs:
-- All files in the `src/` folder
-- The `platformio.ini` file
-
-They can build and upload it using PlatformIO or Arduino IDE.
+2. Install these libraries via **Sketch → Include Library → Manage Libraries**:
+   - `OneWire`
+   - `DallasTemperature`
+   - `LiquidCrystal I2C`
+3. Open `src/main.cpp`
+4. Select **Tools → Board → Arduino Mega 2560**
+5. Select **Tools → Port → (your Arduino's port)**
+6. Click **Upload** (→ button)
 
 ---
 
