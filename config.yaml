@@ -112,6 +112,45 @@ logging:
   enabled: true              # Enable/disable SD card logging
   filename: "hydro.csv"      # Log file name on SD card
 
+# ----------------------------------------------------------------------------
+# LIGHT CONTROL - Automatic grow light scheduling (optional)
+# ----------------------------------------------------------------------------
+lights:
+  zone1:                       # Primary light zone (e.g., veg room)
+    enabled: true              # Enable this zone
+    on_hour: 6                 # Turn on at this hour (0-23)
+    on_minute: 0               # Turn on at this minute (0-59)
+    off_hour: 24               # Turn off at this hour (24 = midnight, gives 18h photoperiod)
+    off_minute: 0              # Turn off at this minute
+    sunrise_mins: 30           # Fade-in duration (0 for instant on)
+    sunset_mins: 30            # Fade-out duration (0 for instant off)
+    expected_watts: 400        # Expected power draw (for verification)
+
+  zone2:                       # Secondary light zone (e.g., flower room)
+    enabled: false             # Disabled by default
+    on_hour: 6
+    on_minute: 0
+    off_hour: 18               # 6 PM = 12 hour photoperiod
+    off_minute: 0
+    sunrise_mins: 30
+    sunset_mins: 30
+    expected_watts: 600
+
+# ----------------------------------------------------------------------------
+# POWER MONITORING - Verify lights are actually on (optional)
+# ----------------------------------------------------------------------------
+power:
+  enabled: true                # Enable current sensing
+  voltage: 120                 # Mains voltage (120 for US, 230 for EU)
+  tolerance_percent: 20        # Alert if actual power differs by more than this %
+
+# ----------------------------------------------------------------------------
+# TIME SETTINGS - RTC and NTP configuration
+# ----------------------------------------------------------------------------
+time:
+  timezone: "EST5EDT,M3.2.0,M11.1.0"  # POSIX timezone string
+  ntp_sync: true               # Sync with NTP servers (ESP32 only)
+
 # ============================================================================
 # PLANT-SPECIFIC PRESETS (uncomment the one you want)
 # ============================================================================

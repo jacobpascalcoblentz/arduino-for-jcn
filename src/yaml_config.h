@@ -98,6 +98,35 @@ struct HydroConfig {
     bool loggingEnabled;
     char logFilename[32];
 
+    // Light Control - Zone 1 (typically veg)
+    bool lightZone1Enabled;
+    uint8_t lightZone1OnHour;
+    uint8_t lightZone1OnMinute;
+    uint8_t lightZone1OffHour;
+    uint8_t lightZone1OffMinute;
+    uint8_t lightZone1SunriseMins;
+    uint8_t lightZone1SunsetMins;
+    float lightZone1ExpectedWatts;
+
+    // Light Control - Zone 2 (typically flower)
+    bool lightZone2Enabled;
+    uint8_t lightZone2OnHour;
+    uint8_t lightZone2OnMinute;
+    uint8_t lightZone2OffHour;
+    uint8_t lightZone2OffMinute;
+    uint8_t lightZone2SunriseMins;
+    uint8_t lightZone2SunsetMins;
+    float lightZone2ExpectedWatts;
+
+    // Power monitoring
+    bool powerMonitorEnabled;
+    float powerVoltage;          // Mains voltage (120 or 230)
+    float powerTolerance;        // Alert threshold percent
+
+    // RTC/Time settings
+    char timezone[32];           // Timezone for NTP sync (ESP32)
+    bool ntpSyncEnabled;         // Auto-sync with NTP (ESP32)
+
     // Load status
     bool loaded;
     char loadError[64];

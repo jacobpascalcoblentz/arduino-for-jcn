@@ -80,6 +80,19 @@ The system will automatically:
 - pH Up solution (potassium hydroxide based)
 - Hydroponic nutrients (A + B formula)
 
+### Optional: Light Control Components (~$30 extra)
+
+| Item | Model | Where to Buy | Approx. Price |
+|------|-------|-------------|---------------|
+| RTC Module | DS3231 | Amazon | $3 |
+| Relay Module (2-channel) | SRD-05VDC-SL-C | Amazon | $5 |
+| Current Sensor (x2) | ACS712 5A | Amazon | $3 each |
+| Solid State Relay (optional) | SSR-40DA | Amazon | $8 |
+
+> **Note:** The solid state relay (SSR) is optional but recommended for high-wattage lights (>400W). It switches silently and lasts longer than mechanical relays. The ACS712 current sensors let you verify your lights are actually on - helpful for catching burned out bulbs.
+
+> **SAFETY WARNING:** Light control involves mains voltage (120V/240V). If you're not comfortable working with mains electricity, hire an electrician or use a pre-made grow light controller. Seriously. Electricity doesn't care about your grow schedule - it will kill you.
+
 ---
 
 ## Assembly Instructions
@@ -179,6 +192,60 @@ MOSI             →    D51
 SCK              →    D52
 CS               →    D53
 ```
+
+### Step 6: Connect Light Control (Optional)
+
+If you're adding automatic light control, follow these steps. If not, skip to "Installing the Software."
+
+**DS3231 RTC (Real-Time Clock):**
+```
+RTC Module Pin   →    Arduino Pin
+─────────────────────────────────
+VCC              →    5V
+GND              →    GND
+SDA              →    D20 (SDA)
+SCL              →    D21 (SCL)
+```
+
+> **Note:** The RTC shares the I2C bus with the LCD display. Both can be connected at the same time.
+
+**Relay Module (for switching lights):**
+```
+Relay Module Pin →    Arduino Pin
+─────────────────────────────────
+VCC              →    5V
+GND              →    GND
+IN1 (Zone 1)     →    D11
+IN2 (Zone 2)     →    D12
+```
+
+> **WARNING: Relay outputs connect to mains voltage (120V/240V)**
+> - Use proper wire gauge (14 AWG minimum for 15A circuits)
+> - Use a proper enclosure
+> - If you don't know what you're doing, STOP and hire an electrician
+
+**ACS712 Current Sensors (optional, for power monitoring):**
+```
+Current Sensor   →    Arduino Pin
+─────────────────────────────────
+Sensor 1 VCC     →    5V
+Sensor 1 GND     →    GND
+Sensor 1 OUT     →    A4
+
+Sensor 2 VCC     →    5V
+Sensor 2 GND     →    GND
+Sensor 2 OUT     →    A5
+```
+
+The current sensor wires connect in-line with the hot wire of your light circuit:
+
+```
+[Wall Outlet] ─HOT─→ [ACS712] ─→ [Relay NC/COM] ─→ [Light Fixture]
+              ─NEU─────────────────────────────────→ [Light Fixture]
+              ─GND─────────────────────────────────→ [Light Fixture]
+```
+
+> **Pro tip:** Run the hot wire through the ACS712 current sensor hole. The sensor measures magnetic field, so no direct electrical connection is needed. This is safer than cutting into the wire.
 
 ---
 
@@ -360,6 +427,53 @@ pumps:
   ph_up_ml_per_sec: 1.0      # Your measured value
   nutrient_a_ml_per_sec: 2.0 # Your measured value
 ```
+
+#### Light Control Settings (Optional)
+
+If you installed the light control hardware, add this section to your config.yaml:
+
+```yaml
+lights:
+  zone1:                       # "Veg" light zone
+    enabled: true
+    on_hour: 6                 # Turn on at 6 AM
+    on_minute: 0
+    off_hour: 24               # Turn off at midnight (24 = 18 hours)
+    off_minute: 0
+    sunrise_mins: 30           # 30 minute fade-in
+    sunset_mins: 30            # 30 minute fade-out
+    expected_watts: 400        # For power monitoring (optional)
+
+  zone2:                       # "Flower" light zone
+    enabled: false             # Set to true if you have a second zone
+    on_hour: 6
+    on_minute: 0
+    off_hour: 18               # Turn off at 6 PM (12 hours)
+    off_minute: 0
+    sunrise_mins: 30
+    sunset_mins: 30
+    expected_watts: 600
+
+power:
+  enabled: true                # Enable power monitoring
+  voltage: 120                 # Your mains voltage (120 for US, 230 for EU)
+  tolerance_percent: 20        # Alert if power differs by more than this
+
+time:
+  timezone: "EST5EDT,M3.2.0,M11.1.0"  # Your timezone (for ESP32 NTP sync)
+  ntp_sync: true               # Sync time from internet (ESP32 only)
+```
+
+**Common Light Schedules:**
+
+| Growth Phase | On Time | Off Time | Photoperiod | Use For |
+|--------------|---------|----------|-------------|---------|
+| Veg / Seedling | 6:00 AM | 12:00 AM | 18 hours | Leafy growth |
+| Flower | 6:00 AM | 6:00 PM | 12 hours | Fruiting, flowering |
+| Lettuce | 6:00 AM | 8:00 PM | 14 hours | Greens (don't flower) |
+| Always On | 0:00 | 24:00 | 24 hours | Propagation clones |
+
+> **"Tomato" Tip:** Start with 18/6 during the first few weeks, then switch to 12/12 when you want... fruit. The controller makes this easy - just change `off_hour` from 24 to 18.
 
 ### Step 3: Save and Insert
 

@@ -93,6 +93,35 @@ void HydroConfig::setDefaults() {
     loggingEnabled = true;
     strcpy(logFilename, "hydro.csv");
 
+    // Light Control - Zone 1 (veg default: 18/6)
+    lightZone1Enabled = true;
+    lightZone1OnHour = LIGHT_ZONE1_ON_HOUR;
+    lightZone1OnMinute = 0;
+    lightZone1OffHour = LIGHT_ZONE1_OFF_HOUR;
+    lightZone1OffMinute = 0;
+    lightZone1SunriseMins = SUNRISE_DURATION_MIN;
+    lightZone1SunsetMins = SUNSET_DURATION_MIN;
+    lightZone1ExpectedWatts = LIGHT_ZONE1_EXPECTED_WATTS;
+
+    // Light Control - Zone 2 (flower default: 12/12)
+    lightZone2Enabled = false;  // Disabled by default
+    lightZone2OnHour = LIGHT_ZONE2_ON_HOUR;
+    lightZone2OnMinute = 0;
+    lightZone2OffHour = LIGHT_ZONE2_OFF_HOUR;
+    lightZone2OffMinute = 0;
+    lightZone2SunriseMins = SUNRISE_DURATION_MIN;
+    lightZone2SunsetMins = SUNSET_DURATION_MIN;
+    lightZone2ExpectedWatts = LIGHT_ZONE2_EXPECTED_WATTS;
+
+    // Power monitoring
+    powerMonitorEnabled = true;
+    powerVoltage = POWER_VOLTAGE;
+    powerTolerance = POWER_TOLERANCE_PERCENT;
+
+    // RTC/Time
+    strcpy(timezone, "EST5EDT,M3.2.0,M11.1.0");
+    ntpSyncEnabled = true;
+
     // Status
     loaded = false;
     loadError[0] = '\0';
@@ -247,6 +276,36 @@ bool YamlConfigParser::load(const char* filename, HydroConfig& config) {
     config.loggingEnabled = getBool("logging.enabled", config.loggingEnabled);
     const char* logFile = getString("logging.filename", config.logFilename);
     strncpy(config.logFilename, logFile, sizeof(config.logFilename) - 1);
+
+    // Light Control - Zone 1
+    config.lightZone1Enabled = getBool("lights.zone1.enabled", config.lightZone1Enabled);
+    config.lightZone1OnHour = (uint8_t)getInt("lights.zone1.on_hour", config.lightZone1OnHour);
+    config.lightZone1OnMinute = (uint8_t)getInt("lights.zone1.on_minute", config.lightZone1OnMinute);
+    config.lightZone1OffHour = (uint8_t)getInt("lights.zone1.off_hour", config.lightZone1OffHour);
+    config.lightZone1OffMinute = (uint8_t)getInt("lights.zone1.off_minute", config.lightZone1OffMinute);
+    config.lightZone1SunriseMins = (uint8_t)getInt("lights.zone1.sunrise_mins", config.lightZone1SunriseMins);
+    config.lightZone1SunsetMins = (uint8_t)getInt("lights.zone1.sunset_mins", config.lightZone1SunsetMins);
+    config.lightZone1ExpectedWatts = getFloat("lights.zone1.expected_watts", config.lightZone1ExpectedWatts);
+
+    // Light Control - Zone 2
+    config.lightZone2Enabled = getBool("lights.zone2.enabled", config.lightZone2Enabled);
+    config.lightZone2OnHour = (uint8_t)getInt("lights.zone2.on_hour", config.lightZone2OnHour);
+    config.lightZone2OnMinute = (uint8_t)getInt("lights.zone2.on_minute", config.lightZone2OnMinute);
+    config.lightZone2OffHour = (uint8_t)getInt("lights.zone2.off_hour", config.lightZone2OffHour);
+    config.lightZone2OffMinute = (uint8_t)getInt("lights.zone2.off_minute", config.lightZone2OffMinute);
+    config.lightZone2SunriseMins = (uint8_t)getInt("lights.zone2.sunrise_mins", config.lightZone2SunriseMins);
+    config.lightZone2SunsetMins = (uint8_t)getInt("lights.zone2.sunset_mins", config.lightZone2SunsetMins);
+    config.lightZone2ExpectedWatts = getFloat("lights.zone2.expected_watts", config.lightZone2ExpectedWatts);
+
+    // Power monitoring
+    config.powerMonitorEnabled = getBool("power.enabled", config.powerMonitorEnabled);
+    config.powerVoltage = getFloat("power.voltage", config.powerVoltage);
+    config.powerTolerance = getFloat("power.tolerance_percent", config.powerTolerance);
+
+    // RTC/Time
+    const char* tz = getString("time.timezone", config.timezone);
+    strncpy(config.timezone, tz, sizeof(config.timezone) - 1);
+    config.ntpSyncEnabled = getBool("time.ntp_sync", config.ntpSyncEnabled);
 
     config.loaded = true;
     return true;
@@ -748,6 +807,70 @@ bool ConfigLoader::validateConfig(const HydroConfig& config, char* errorMsg) {
     if (config.tdsCalibrationFactor <= 0.0f || config.tdsCalibrationFactor > 10.0f) {
         strcpy(errorMsg, "TDS calibration factor out of range (0-10)");
         return false;
+    }
+
+    // =========================================================================
+    // LIGHT SCHEDULE VALIDATION
+    // =========================================================================
+
+    // Zone 1 schedule validation
+    if (config.lightZone1Enabled) {
+        if (config.lightZone1OnHour > 23) {
+            strcpy(errorMsg, "Zone 1 on_hour out of range (0-23)");
+            return false;
+        }
+        if (config.lightZone1OffHour > 24) {  // 24 = midnight next day
+            strcpy(errorMsg, "Zone 1 off_hour out of range (0-24)");
+            return false;
+        }
+        if (config.lightZone1OnMinute > 59 || config.lightZone1OffMinute > 59) {
+            strcpy(errorMsg, "Zone 1 minutes out of range (0-59)");
+            return false;
+        }
+        if (config.lightZone1SunriseMins > 120) {
+            strcpy(errorMsg, "Zone 1 sunrise duration too long (max 120 min)");
+            return false;
+        }
+        if (config.lightZone1ExpectedWatts < 0.0f || config.lightZone1ExpectedWatts > 5000.0f) {
+            strcpy(errorMsg, "Zone 1 expected watts out of range (0-5000)");
+            return false;
+        }
+    }
+
+    // Zone 2 schedule validation
+    if (config.lightZone2Enabled) {
+        if (config.lightZone2OnHour > 23) {
+            strcpy(errorMsg, "Zone 2 on_hour out of range (0-23)");
+            return false;
+        }
+        if (config.lightZone2OffHour > 24) {
+            strcpy(errorMsg, "Zone 2 off_hour out of range (0-24)");
+            return false;
+        }
+        if (config.lightZone2OnMinute > 59 || config.lightZone2OffMinute > 59) {
+            strcpy(errorMsg, "Zone 2 minutes out of range (0-59)");
+            return false;
+        }
+        if (config.lightZone2SunriseMins > 120) {
+            strcpy(errorMsg, "Zone 2 sunrise duration too long (max 120 min)");
+            return false;
+        }
+        if (config.lightZone2ExpectedWatts < 0.0f || config.lightZone2ExpectedWatts > 5000.0f) {
+            strcpy(errorMsg, "Zone 2 expected watts out of range (0-5000)");
+            return false;
+        }
+    }
+
+    // Power monitoring validation
+    if (config.powerMonitorEnabled) {
+        if (config.powerVoltage < 100.0f || config.powerVoltage > 250.0f) {
+            strcpy(errorMsg, "Power voltage out of range (100-250V)");
+            return false;
+        }
+        if (config.powerTolerance < 5.0f || config.powerTolerance > 50.0f) {
+            strcpy(errorMsg, "Power tolerance out of range (5-50%)");
+            return false;
+        }
     }
 
     // All validations passed

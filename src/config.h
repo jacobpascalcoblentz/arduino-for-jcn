@@ -46,6 +46,21 @@
 // SPI Pins (SD Card)
 #define PIN_SD_CS            53
 
+// I2C Pins (RTC DS3231, LCD)
+// SDA = 20, SCL = 21 on Arduino Mega (hardware I2C)
+#define PIN_I2C_SDA          20
+#define PIN_I2C_SCL          21
+
+// Light Control Pins
+#define PIN_LIGHT_ZONE_1     11   // Relay for light zone 1 (veg)
+#define PIN_LIGHT_ZONE_2     12   // Relay for light zone 2 (flower)
+#define PIN_LIGHT_DIM_1      44   // PWM for dimming zone 1 (optional)
+#define PIN_LIGHT_DIM_2      45   // PWM for dimming zone 2 (optional)
+
+// Power Monitoring Pins
+#define PIN_CURRENT_SENSOR_1 A4   // ACS712 for zone 1
+#define PIN_CURRENT_SENSOR_2 A5   // ACS712 for zone 2
+
 // ============================================================================
 // SENSOR CALIBRATION DEFAULTS
 // ============================================================================
@@ -148,5 +163,36 @@
 // ADC parameters
 #define ADC_RESOLUTION           1024
 #define ADC_VREF                 5.0f
+
+// ============================================================================
+// LIGHT CONTROL PARAMETERS
+// ============================================================================
+
+#define NUM_LIGHT_ZONES          2
+#define LIGHT_CHECK_INTERVAL_MS  1000     // Check schedule every second
+
+// Default schedules (24h format)
+#define LIGHT_ZONE1_ON_HOUR      6        // 6 AM
+#define LIGHT_ZONE1_OFF_HOUR     24       // Midnight (18h photoperiod - veg)
+#define LIGHT_ZONE2_ON_HOUR      6        // 6 AM
+#define LIGHT_ZONE2_OFF_HOUR     18       // 6 PM (12h photoperiod - flower)
+
+// Sunrise/sunset simulation
+#define SUNRISE_DURATION_MIN     30       // 30 minute ramp up
+#define SUNSET_DURATION_MIN      30       // 30 minute ramp down
+
+// ============================================================================
+// POWER MONITORING PARAMETERS
+// ============================================================================
+
+// ACS712 current sensor (5A version)
+#define ACS712_SENSITIVITY       0.185f   // V/A for 5A version (0.185), 20A (0.100), 30A (0.066)
+#define ACS712_ZERO_POINT        2.5f     // Voltage at 0 amps (Vcc/2)
+#define POWER_VOLTAGE            120.0f   // Mains voltage (120V US, 230V EU)
+
+// Expected power draw per zone (watts) - for verification
+#define LIGHT_ZONE1_EXPECTED_WATTS  400.0f
+#define LIGHT_ZONE2_EXPECTED_WATTS  600.0f
+#define POWER_TOLERANCE_PERCENT     20.0f  // Alert if power differs by more than 20%
 
 #endif // CONFIG_H

@@ -8,7 +8,10 @@ cc_library(
     srcs = [
         "src/calibration.cpp",
         "src/controller.cpp",
+        "src/lights.cpp",
         "src/mock_arduino.cpp",
+        "src/power_monitor.cpp",
+        "src/rtc.cpp",
         "src/sensors.cpp",
         "src/yaml_config.cpp",
     ],
@@ -16,7 +19,10 @@ cc_library(
         "src/calibration.h",
         "src/config.h",
         "src/controller.h",
+        "src/lights.h",
         "src/mock_arduino.h",
+        "src/power_monitor.h",
+        "src/rtc.h",
         "src/sensors.h",
         "src/yaml_config.h",
     ],
@@ -30,6 +36,7 @@ cc_test(
     size = "small",
     srcs = [
         "test/test_controller.cpp",
+        "test/test_lights.cpp",
         "test/test_main.cpp",
         "test/test_sensors.cpp",
         "test/test_yaml_config.cpp",
@@ -79,6 +86,21 @@ cc_test(
     srcs = [
         "test/test_main.cpp",
         "test/test_yaml_config.cpp",
+    ],
+    copts = ["-std=c++14"],
+    deps = [
+        ":hydro_lib",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "light_tests",
+    size = "small",
+    srcs = [
+        "test/test_lights.cpp",
+        "test/test_main.cpp",
     ],
     copts = ["-std=c++14"],
     deps = [
