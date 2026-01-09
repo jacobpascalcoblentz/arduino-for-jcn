@@ -9,10 +9,7 @@
 #ifdef ARDUINO
 #include <Arduino.h>
 #else
-// Mock millis() for testing
-static uint32_t mockMillis = 0;
-uint32_t millis() { return mockMillis; }
-void setMockMillis(uint32_t ms) { mockMillis = ms; }
+#include "mock_arduino.h"
 #endif
 
 // ============================================================================

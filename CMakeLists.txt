@@ -10,6 +10,7 @@ set(LIB_SOURCES
     src/sensors.cpp
     src/controller.cpp
     src/yaml_config.cpp
+    src/mock_arduino.cpp
 )
 
 set(LIB_HEADERS
@@ -17,6 +18,7 @@ set(LIB_HEADERS
     src/sensors.h
     src/controller.h
     src/yaml_config.h
+    src/mock_arduino.h
 )
 
 # Create library for testing

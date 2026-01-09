@@ -7,6 +7,20 @@
 #define CONFIG_H
 
 // ============================================================================
+// MOCK ARDUINO DEFINITIONS FOR NATIVE BUILDS
+// ============================================================================
+
+#ifndef ARDUINO
+// Mock analog pin definitions for testing
+#define A0 14
+#define A1 15
+#define A2 16
+#define A3 17
+#define A4 18
+#define A5 19
+#endif
+
+// ============================================================================
 // PIN DEFINITIONS
 // ============================================================================
 
@@ -107,7 +121,7 @@
 // Rate limiters (prevent overdosing)
 #define MAX_PH_DOSE_ML           10.0f    // Max single dose
 #define MAX_NUTRIENT_DOSE_ML     20.0f
-#define MIN_DOSE_INTERVAL_SEC    300      // 5 minutes between doses
+#define MIN_DOSE_INTERVAL_SEC    300UL    // 5 minutes between doses
 
 // ============================================================================
 // TIMING PARAMETERS

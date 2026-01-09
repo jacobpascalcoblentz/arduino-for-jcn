@@ -11,8 +11,7 @@
 #ifdef ARDUINO
 #include <Arduino.h>
 #else
-extern uint32_t millis();
-extern void setMockMillis(uint32_t ms);
+#include "mock_arduino.h"
 #endif
 
 // ============================================================================

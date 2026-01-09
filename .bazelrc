@@ -1,0 +1,9 @@
+# C++ settings
+build --cxxopt=-std=c++14
+build --host_cxxopt=-std=c++14
+
+# Test output
+test --test_output=errors
+
+# Cache settings
+build --disk_cache=~/.cache/bazel
