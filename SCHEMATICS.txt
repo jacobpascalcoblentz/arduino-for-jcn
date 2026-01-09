@@ -1,0 +1,264 @@
+================================================================================
+        AQUAPONICS/HYDROPONICS MONITORING & CONTROL SYSTEM SCHEMATIC
+================================================================================
+
+MICROCONTROLLER: Arduino Mega 2560 (recommended for multiple analog inputs)
+                 or ESP32 for WiFi capability
+
+================================================================================
+                            POWER SUPPLY SECTION
+================================================================================
+
+    AC Mains (120V/240V)
+         |
+         v
+    +----------+
+    | 12V 5A   |----+---> 12V Rail (Pumps, Solenoids)
+    | PSU      |    |
+    +----------+    |
+                    v
+              +----------+
+              | LM7805   |-----> 5V Rail (Arduino, Sensors)
+              | Regulator|
+              +----------+
+                    |
+                   GND
+
+================================================================================
+                           SENSOR CONNECTIONS
+================================================================================
+
+1. pH SENSOR (Analog pH Sensor Module - e.g., DFRobot SEN0161)
+   ┌─────────────────┐
+   │   pH Probe      │
+   │   (BNC Conn)    │
+   └────────┬────────┘
+            │
+   ┌────────┴────────┐
+   │  pH Amplifier   │
+   │  Module         │
+   │  ┌───────────┐  │
+   │  │ V+  = 5V  │──┼──────> Arduino 5V
+   │  │ GND = GND │──┼──────> Arduino GND
+   │  │ Po  = A0  │──┼──────> Arduino A0 (pH Signal)
+   │  │ To  = A1  │──┼──────> Arduino A1 (Temperature Compensation)
+   │  └───────────┘  │
+   └─────────────────┘
+
+2. TEMPERATURE SENSOR (DS18B20 Waterproof Probe)
+   ┌─────────────────┐
+   │  DS18B20 Probe  │
+   │  (Waterproof)   │
+   │  ┌───────────┐  │
+   │  │ VCC (Red) │──┼──────> Arduino 5V
+   │  │ GND (Blk) │──┼──────> Arduino GND
+   │  │ Data(Yel) │──┼──┬───> Arduino D2 (OneWire Data)
+   │  └───────────┘  │  │
+   └─────────────────┘  │
+                        ├───[4.7kΩ]───> 5V (Pull-up Resistor)
+                        │
+
+3. TDS SENSOR (Total Dissolved Solids - e.g., DFRobot SEN0244)
+   ┌─────────────────┐
+   │   TDS Probe     │
+   │   (2-pin)       │
+   └────────┬────────┘
+            │
+   ┌────────┴────────┐
+   │  TDS Module     │
+   │  ┌───────────┐  │
+   │  │ VCC = 5V  │──┼──────> Arduino 5V
+   │  │ GND = GND │──┼──────> Arduino GND
+   │  │ A   = A2  │──┼──────> Arduino A2 (TDS Signal)
+   │  └───────────┘  │
+   └─────────────────┘
+
+4. WATER LEVEL SENSOR (Ultrasonic HC-SR04 or Pressure Transducer)
+
+   Option A: HC-SR04 Ultrasonic (Non-contact, mounted above water)
+   ┌─────────────────┐
+   │    HC-SR04      │
+   │  ┌───────────┐  │
+   │  │ VCC = 5V  │──┼──────> Arduino 5V
+   │  │ GND = GND │──┼──────> Arduino GND
+   │  │ Trig      │──┼──────> Arduino D3 (Trigger)
+   │  │ Echo      │──┼──────> Arduino D4 (Echo)
+   │  └───────────┘  │
+   └─────────────────┘
+
+   Option B: eTape Liquid Level Sensor (Resistive, submerged)
+   ┌─────────────────┐
+   │   eTape Sensor  │
+   │  ┌───────────┐  │
+   │  │ Pin 1     │──┼───[560Ω]───> 5V
+   │  │ Pin 2     │──┼──────> Arduino A3 (Level Signal)
+   │  │ Pin 3     │──┼──────> GND
+   │  │ Pin 4     │──┼──────> (NC or calibration)
+   │  └───────────┘  │
+   └─────────────────┘
+
+================================================================================
+                          ACTUATOR CONNECTIONS
+================================================================================
+
+5. DOSING PUMPS (Peristaltic Pumps for pH Up/Down, Nutrients)
+
+   Arduino D5 ────> [1kΩ] ────> Gate of IRLZ44N (Logic Level MOSFET)
+                                     │
+                                   Drain
+                                     │
+                          ┌──────────┴──────────┐
+                          │   Peristaltic Pump  │
+                          │   (pH Down - Acid)  │
+                          └──────────┬──────────┘
+                                     │
+                                   12V+
+
+   (Flyback Diode 1N4007 across pump terminals, cathode to 12V+)
+
+   Repeat for:
+   - D6: pH Up Pump (Base solution)
+   - D7: Nutrient A Pump
+   - D8: Nutrient B Pump
+   - D9: Fresh Water Solenoid Valve
+
+6. WATER CIRCULATION PUMP (Main system pump)
+
+   Arduino D10 ────> [1kΩ] ────> IRLZ44N Gate
+                                      │
+                                    Drain
+                                      │
+                           ┌──────────┴──────────┐
+                           │  12V Submersible    │
+                           │  Water Pump         │
+                           └──────────┬──────────┘
+                                      │
+                                    12V+
+
+================================================================================
+                           DISPLAY & INTERFACE
+================================================================================
+
+7. LCD DISPLAY (20x4 I2C LCD)
+   ┌─────────────────┐
+   │  LCD 2004 I2C   │
+   │  ┌───────────┐  │
+   │  │ VCC = 5V  │──┼──────> Arduino 5V
+   │  │ GND = GND │──┼──────> Arduino GND
+   │  │ SDA       │──┼──────> Arduino SDA (A4 on Uno, D20 on Mega)
+   │  │ SCL       │──┼──────> Arduino SCL (A5 on Uno, D21 on Mega)
+   │  └───────────┘  │
+   └─────────────────┘
+
+8. SD CARD MODULE (Data Logging)
+   ┌─────────────────┐
+   │  SD Card Module │
+   │  ┌───────────┐  │
+   │  │ VCC = 5V  │──┼──────> Arduino 5V
+   │  │ GND = GND │──┼──────> Arduino GND
+   │  │ MISO      │──┼──────> Arduino D50 (Mega) / D12 (Uno)
+   │  │ MOSI      │──┼──────> Arduino D51 (Mega) / D11 (Uno)
+   │  │ SCK       │──┼──────> Arduino D52 (Mega) / D13 (Uno)
+   │  │ CS        │──┼──────> Arduino D53 (Mega) / D10 (Uno)
+   │  └───────────┘  │
+   └─────────────────┘
+
+================================================================================
+                              PIN SUMMARY
+================================================================================
+
+ARDUINO MEGA 2560 PIN ASSIGNMENTS:
+┌────────────┬──────────────────────────────────────────┐
+│    PIN     │              FUNCTION                    │
+├────────────┼──────────────────────────────────────────┤
+│    A0      │  pH Sensor Signal                        │
+│    A1      │  pH Temperature Compensation             │
+│    A2      │  TDS Sensor Signal                       │
+│    A3      │  Water Level (if using eTape)            │
+│    D2      │  DS18B20 Temperature (OneWire)           │
+│    D3      │  HC-SR04 Trigger (if using ultrasonic)   │
+│    D4      │  HC-SR04 Echo                            │
+│    D5      │  pH Down Pump (PWM)                      │
+│    D6      │  pH Up Pump (PWM)                        │
+│    D7      │  Nutrient A Pump                         │
+│    D8      │  Nutrient B Pump                         │
+│    D9      │  Fresh Water Valve                       │
+│    D10     │  Main Circulation Pump                   │
+│  D20/SDA   │  I2C Data (LCD)                          │
+│  D21/SCL   │  I2C Clock (LCD)                         │
+│    D50     │  SPI MISO (SD Card)                      │
+│    D51     │  SPI MOSI (SD Card)                      │
+│    D52     │  SPI SCK (SD Card)                       │
+│    D53     │  SPI CS (SD Card)                        │
+└────────────┴──────────────────────────────────────────┘
+
+================================================================================
+                           PHYSICAL LAYOUT
+================================================================================
+
+                    ┌─────────────────────────────────┐
+                    │         RESERVOIR TANK          │
+                    │                                 │
+    ┌───────────────┤  ┌─────┐         ┌─────┐       │
+    │ Ultrasonic    │  │DS18B│         │ TDS │       │
+    │ HC-SR04       │  │20   │         │Probe│       │
+    └───────┬───────┤  └──┬──┘         └──┬──┘       │
+            │       │     │               │          │
+            v       │  ~~~│~~~~~~~~~~~~~~~│~~~~~~~~  │ <- Water Level
+      ┌─────────┐   │     │    ┌─────┐    │          │
+      │ pH Probe│   │     │    │ pH  │    │          │
+      └────┬────┘   │     │    │Probe│    │          │
+           │        │     │    └──┬──┘    │          │
+           │        │     │       │       │          │
+           └────────┼─────┴───────┴───────┘          │
+                    │                                 │
+                    │    ┌──────────────────┐        │
+                    │    │  Submersible     │        │
+                    │    │  Circulation     │        │
+                    │    │  Pump            │        │
+                    │    └────────┬─────────┘        │
+                    │             │                  │
+                    └─────────────┼──────────────────┘
+                                  │
+                                  v (To grow beds / recirculation)
+
+    DOSING STATION (External):
+    ┌─────────────────────────────────────────────────┐
+    │  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐   │
+    │  │pH - │  │pH + │  │Nut A│  │Nut B│  │Fresh│   │
+    │  │Pump │  │Pump │  │Pump │  │Pump │  │H2O  │   │
+    │  └──┬──┘  └──┬──┘  └──┬──┘  └──┬──┘  └──┬──┘   │
+    │     │        │        │        │        │      │
+    │     v        v        v        v        v      │
+    │   (Tubes leading to reservoir injection point) │
+    └─────────────────────────────────────────────────┘
+
+================================================================================
+                         BILL OF MATERIALS
+================================================================================
+
+SENSORS:
+  - 1x DFRobot Analog pH Sensor Kit (SEN0161)     ~$30
+  - 1x DS18B20 Waterproof Temperature Probe       ~$5
+  - 1x DFRobot TDS Sensor (SEN0244)               ~$12
+  - 1x HC-SR04 Ultrasonic Sensor                  ~$3
+
+ACTUATORS:
+  - 4x Peristaltic Dosing Pumps (12V)             ~$40
+  - 1x 12V Solenoid Valve (1/2" NPT)              ~$15
+  - 1x 12V Submersible Pump                       ~$20
+
+ELECTRONICS:
+  - 1x Arduino Mega 2560                          ~$15
+  - 4x IRLZ44N Logic Level MOSFETs                ~$4
+  - 1x 20x4 I2C LCD Display                       ~$10
+  - 1x SD Card Module                             ~$3
+  - 1x 12V 5A Power Supply                        ~$12
+  - 1x LM7805 Voltage Regulator                   ~$1
+  - Resistors, capacitors, diodes                 ~$5
+  - Prototype PCB / Perfboard                     ~$5
+  - Enclosure (IP65 rated for moisture)           ~$20
+
+TOTAL ESTIMATED COST: ~$200
+
+================================================================================

@@ -1,0 +1,150 @@
+# ============================================================================
+# HYDROPONICS CONTROLLER CONFIGURATION
+# ============================================================================
+# Edit this file to customize your system. Save to SD card as "config.yaml"
+# All values are in standard units (Celsius, ppm, percent, mL)
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# SETPOINTS - Target values the system will maintain
+# ----------------------------------------------------------------------------
+setpoints:
+  ph: 6.0                    # Target pH (typical range: 5.5-6.5 for most plants)
+  tds: 800                   # Target TDS in ppm (400-1200 typical)
+  temperature: 22            # Target temperature in Celsius (18-26 typical)
+  water_level: 80            # Target water level in percent (60-90 typical)
+
+# ----------------------------------------------------------------------------
+# DEADBANDS - How close is "good enough" (prevents constant adjustments)
+# ----------------------------------------------------------------------------
+deadbands:
+  ph: 0.2                    # Won't adjust if within +/- 0.2 of setpoint
+  tds: 50                    # Won't adjust if within +/- 50 ppm
+  temperature: 1.0           # Won't adjust if within +/- 1°C
+  water_level: 5             # Won't adjust if within +/- 5%
+
+# ----------------------------------------------------------------------------
+# SAFETY LIMITS - Alarms trigger if values go outside these ranges
+# ----------------------------------------------------------------------------
+safety:
+  ph_min: 5.0                # Alarm if pH drops below this
+  ph_max: 7.5                # Alarm if pH rises above this
+  tds_min: 300               # Alarm if TDS drops below this (ppm)
+  tds_max: 1500              # Alarm if TDS rises above this (ppm)
+  temp_min: 15               # Alarm if temperature drops below this (°C)
+  temp_max: 32               # Alarm if temperature rises above this (°C)
+  level_min: 20              # Alarm if level drops below this (%)
+  level_max: 95              # Alarm if level rises above this (%)
+
+# ----------------------------------------------------------------------------
+# DOSING LIMITS - Maximum amounts per single dose (safety feature)
+# ----------------------------------------------------------------------------
+dosing:
+  max_ph_dose_ml: 10         # Max mL of pH solution per dose
+  max_nutrient_dose_ml: 20   # Max mL of nutrients per dose
+  max_water_ml: 1000         # Max mL of water to add per dose
+  min_dose_interval_sec: 300 # Wait at least this many seconds between doses
+
+# ----------------------------------------------------------------------------
+# SYSTEM PARAMETERS - Physical properties of your setup
+# ----------------------------------------------------------------------------
+system:
+  volume_liters: 100         # Total water volume in your system
+  tank_height_cm: 60         # Height of your reservoir tank
+  tank_area_cm2: 2500        # Tank cross-section area (length x width in cm²)
+
+# ----------------------------------------------------------------------------
+# PUMP FLOW RATES - Calibrate these by measuring actual output
+# ----------------------------------------------------------------------------
+# To calibrate: Run pump for 60 seconds, measure mL collected, divide by 60
+pumps:
+  ph_down_ml_per_sec: 1.0    # pH Down pump flow rate
+  ph_up_ml_per_sec: 1.0      # pH Up pump flow rate
+  nutrient_a_ml_per_sec: 2.0 # Nutrient A pump flow rate
+  nutrient_b_ml_per_sec: 2.0 # Nutrient B pump flow rate
+  water_ml_per_sec: 50       # Fresh water valve flow rate
+
+# ----------------------------------------------------------------------------
+# CHEMICAL STRENGTHS - How strong are your solutions?
+# ----------------------------------------------------------------------------
+chemicals:
+  ph_down_strength: 10       # Effective pH change per liter of solution
+  ph_up_strength: 10         # Effective pH change per liter of solution
+  nutrient_a_tds_per_ml: 50  # ppm TDS increase per mL of Nutrient A
+  nutrient_b_tds_per_ml: 50  # ppm TDS increase per mL of Nutrient B
+
+# ----------------------------------------------------------------------------
+# SENSOR CALIBRATION - Adjust after calibrating with reference solutions
+# ----------------------------------------------------------------------------
+calibration:
+  ph_neutral_mv: 1500        # Voltage reading (mV) in pH 7.0 buffer
+  ph_acid_mv: 2032           # Voltage reading (mV) in pH 4.0 buffer
+  tds_factor: 0.5            # TDS calibration multiplier
+  level_sensor_offset_cm: 5  # Distance from ultrasonic sensor to tank top
+
+# ----------------------------------------------------------------------------
+# CONTROLLER TUNING - Advanced settings (usually don't need to change)
+# ----------------------------------------------------------------------------
+controller:
+  # Feedforward gains (0.0-1.0, lower = more conservative)
+  ff_ph_gain: 0.8
+  ff_tds_gain: 0.7
+  ff_level_gain: 0.9
+
+  # Feedback integral gains (smaller = slower but more stable)
+  ki_ph: 0.001
+  ki_tds: 0.01
+  ki_level: 0.05
+
+# ----------------------------------------------------------------------------
+# TIMING - How often things happen
+# ----------------------------------------------------------------------------
+timing:
+  sensor_read_ms: 1000       # Read sensors every X milliseconds
+  control_update_ms: 5000    # Run controller every X milliseconds
+  log_interval_ms: 60000     # Log data every X milliseconds
+  display_update_ms: 500     # Update LCD every X milliseconds
+
+# ----------------------------------------------------------------------------
+# LOGGING - Data recording options
+# ----------------------------------------------------------------------------
+logging:
+  enabled: true              # Enable/disable SD card logging
+  filename: "hydro.csv"      # Log file name on SD card
+
+# ============================================================================
+# PLANT-SPECIFIC PRESETS (uncomment the one you want)
+# ============================================================================
+
+# --- LETTUCE / LEAFY GREENS ---
+# setpoints:
+#   ph: 6.0
+#   tds: 560
+
+# --- TOMATOES ---
+# setpoints:
+#   ph: 6.0
+#   tds: 1400
+
+# --- STRAWBERRIES ---
+# setpoints:
+#   ph: 5.8
+#   tds: 1000
+
+# --- PEPPERS ---
+# setpoints:
+#   ph: 6.0
+#   tds: 1200
+
+# --- HERBS (Basil, Mint, etc.) ---
+# setpoints:
+#   ph: 6.0
+#   tds: 700
+
+# --- CANNABIS (where legal) ---
+# Vegetative:
+#   ph: 5.8
+#   tds: 700
+# Flowering:
+#   ph: 6.2
+#   tds: 1100
