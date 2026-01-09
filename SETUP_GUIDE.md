@@ -609,6 +609,21 @@ The system saves data to `hydro.csv` on the SD card. You can:
 - Decrease the controller gains in config
 - Check that your system volume is set correctly
 
+### System is running great but plants look "happy"
+
+- This is not a bug, this is a feature
+- Your pH is dialed in perfectly
+- Consider taking a photo for... documentation purposes
+- If someone asks why you're so interested in hydroponics, mumble something about "sustainability" and "locally sourced produce"
+
+### You forgot what you were doing
+
+- Check your notes (you did take notes, right?)
+- Look at the Serial Monitor
+- Check the SD card logs
+- Take a short break and come back to it
+- This happens to everyone. *Everyone.*
+
 ---
 
 ## Plant-Specific Settings
@@ -659,6 +674,21 @@ setpoints:
   temperature: 22
   water_level: 80
 ```
+
+### "Tomatoes" (You Know The Ones)
+```yaml
+setpoints:
+  ph: 6.0           # Keep it tight - she's picky
+  tds: 900          # Veg phase
+  # tds: 1200       # Flower phase (uncomment when ready)
+  temperature: 24   # She likes it warm but not hot
+  water_level: 80
+
+# NOTE: This preset optimizes for "yield" and "terpene production"
+# Your "tomatoes" will be *very* flavorful
+```
+
+> **Pro tip:** If anyone asks what you're growing, the answer is always "tomatoes." If they ask why tomatoes need 18 hours of grow lights, tell them it's a science experiment. If they ask why it smells, blame the neighbor's cat.
 
 ---
 
@@ -1043,4 +1073,21 @@ Do NOT expose this directly to the internet unless you:
 3. Put it behind a VPN or reverse proxy
 4. Enable your router's guest network isolation
 
-For home networks, it's generally fine. For commercial grows... hire a security consultant. And maybe a lawyer.
+For home networks, it's generally fine. For commercial grows... hire a security consultant. And maybe a lawyer. And maybe a better lawyer.
+
+---
+
+## Legal Disclaimer (Read With a Straight Face)
+
+This hydroponics controller is designed for growing **legal** plants like tomatoes, lettuce, peppers, and herbs. What you choose to grow is between you, your plants, and whatever deity you believe in.
+
+The author:
+- Cannot be held responsible for "unusually productive" harvests
+- Does not want to know why you need 18/6 lighting schedules
+- Will not answer questions at 4:20 PM
+- Has never noticed that EC of 1.8 seems to be everyone's "sweet spot"
+- Finds it *totally coincidental* that optimal pH for "tomatoes" matches a certain other plant
+
+Remember: This is a *legitimate agricultural tool*. The fact that it happens to be perfect for certain *medicinal applications* is purely coincidental. Any resemblance to equipment used for Schedule I substances is unintentional and frankly, rude of you to suggest.
+
+*Stay hydrated. Stay legal. Stay paranoid about your pH.*
