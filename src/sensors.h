@@ -117,6 +117,7 @@ private:
 class TemperatureSensor : public SensorBase {
 public:
     explicit TemperatureSensor(uint8_t oneWirePin);
+    ~TemperatureSensor();  // Destructor to prevent memory leak
 
     bool begin() override;
     bool read() override;

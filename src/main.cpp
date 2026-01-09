@@ -316,7 +316,10 @@ void runController() {
 #ifdef ARDUINO
     if (!systemRunning) return;
 
-    float dt = CONTROL_UPDATE_INTERVAL_MS / 1000.0f;
+    // Update pump timers (non-blocking pump control)
+    actuators.update();
+
+    float dt = gConfig.controlUpdateMs / 1000.0f;
 
     // Get control action from feedforward controller
     lastAction = controller.update(currentReadings, dt);
@@ -401,9 +404,9 @@ void updateDisplay() {
 
 void logData() {
 #ifdef ARDUINO
-    if (!sdInitialized) return;
+    if (!sdInitialized || !gConfig.loggingEnabled) return;
 
-    logFile = SD.open("hydro.csv", FILE_WRITE);
+    logFile = SD.open(gConfig.logFilename, FILE_WRITE);
     if (logFile) {
         // timestamp,ph,temp_c,tds_ppm,level_pct,ph_dose,nutrient_dose,status
         logFile.print(uptimeSeconds);
@@ -615,6 +618,14 @@ void runCalibration() {
                 float knownTds = Serial.parseFloat();
                 sensors.readAll();
                 float measuredTds = sensors.getTdsSensor()->getValue();
+
+                // Guard against division by zero
+                if (measuredTds < 0.01f) {
+                    Serial.println(F("ERROR: Measured TDS too low or sensor error"));
+                    Serial.println(F("Check sensor connection and try again"));
+                    break;
+                }
+
                 float factor = knownTds / measuredTds;
                 sensors.getTdsSensor()->setCalibrationFactor(factor);
                 Serial.print(F("TDS calibration factor set to "));

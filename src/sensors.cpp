@@ -132,6 +132,20 @@ void PhSensor::injectRawValue(int rawAdc) {
 // ============================================================================
 
 TemperatureSensor::TemperatureSensor(uint8_t oneWirePin) : pin_(oneWirePin) {
+#ifdef ARDUINO
+    oneWire_ = nullptr;
+    sensors_ = nullptr;
+#endif
+}
+
+TemperatureSensor::~TemperatureSensor() {
+#ifdef ARDUINO
+    // Clean up dynamically allocated objects to prevent memory leak
+    delete sensors_;
+    sensors_ = nullptr;
+    delete oneWire_;
+    oneWire_ = nullptr;
+#endif
 }
 
 bool TemperatureSensor::begin() {
