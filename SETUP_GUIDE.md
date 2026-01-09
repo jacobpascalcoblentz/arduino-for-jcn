@@ -301,6 +301,8 @@ setpoints:
 | Herbs | 5.5 - 6.5 |
 | Cannabis | 5.8 - 6.2 |
 
+> **Note:** If you're growing "tomatoes" that smell like a skunk and require very specific lighting schedules, this system won't judge you. It also won't remember anything you tell it, which is fitting.
+
 **Common TDS Values by Plant Type:**
 | Plant | TDS (ppm) |
 |-------|-----------|
